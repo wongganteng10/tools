@@ -1,0 +1,18 @@
+Penggunaan sed untuk Mengganti Teks dalam File
+
+# sed [options] 's/pola/ganti/g' nama_file 
+
+# Contoh Perintah:
+sed -i 's/CE:32:E5:16:CD:33/KL:89:fr:134CD:22/g' namafile.txt
+
+# Sebelum:
+
+"/tmp/ag1/www/ag.et_currentpass.txt"
+aircrack-ng -a 2 -b CE:32:E5:16:CD:33 -w "/tmp/ag1/www/ag.et_currentpass.txt" "/root/handshake-CE:32:E5:16:CD:33.cap" | grep "KEY FOUND!" > /dev/null
+if [ "$?" = "0" ]; then
+
+# Sesudah:
+
+"/tmp/ag1/www/ag.et_currentpass.txt"
+aircrack-ng -a 2 -b KL:89:fr:134CD:22 -w "/tmp/ag1/www/ag.et_currentpass.txt" "/root/handshake-KL:89:fr:134CD:22.cap" | grep "KEY FOUND!" > /dev/null
+if [ "$?" = "0" ]; then
