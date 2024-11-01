@@ -9,7 +9,7 @@ echo -e '\t\t<script type="text/javascript" src="portal.js"></script>'
 echo -e '\t</head>'
 echo -e '\t<body>'
 echo -e '\t\t<div class="content check-color">'
-echo -e '\t\t\t<center><p>'
+echo -e '\t\t\t<center><p class="info-chack">'
 POST_DATA=$(cat /dev/stdin)
 if [[ "${REQUEST_METHOD}" = "POST" ]] && [[ "${CONTENT_LENGTH}" -gt 0 ]]; then
 POST_DATA=${POST_DATA#*=}
