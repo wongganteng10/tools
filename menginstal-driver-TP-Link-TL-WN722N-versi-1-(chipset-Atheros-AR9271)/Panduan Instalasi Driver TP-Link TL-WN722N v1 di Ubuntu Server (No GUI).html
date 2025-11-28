@@ -1,0 +1,380 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Hasil Markdown</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; background:#fff; }
+        h1, h2, h3, h4, h5, h6 { color: #333; }
+        pre { position: relative; background: #f6f8fa; padding: 12px; border-radius: 6px; overflow-x: auto; }
+        code { font-family: monospace; }
+        .copy-btn { position: absolute; top: 6px; right: 6px; background: #0366d6; color: white; border: none; padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; opacity: 0.7; }
+        .copy-btn:hover { opacity: 1; }
+    </style>
+</head>
+<body>
+<p>Baik, berikut panduan <strong>lengkap dan aman</strong> untuk menginstal <strong>driver TP-Link TL-WN722N versi 1 (chipset Atheros AR9271)</strong> di <strong>Ubuntu Server</strong> (tanpa GUI).</p>
+<hr>
+<h2>🧩 1. Cek Versi dan Chipset Adapter</h2>
+<p>Pertama, pastikan adapter kamu <strong>versi 1</strong>, karena hanya <strong>v1</strong> yang menggunakan chipset <strong>Atheros AR9271</strong> (bisa langsung pakai driver <code>ath9k_htc</code> bawaan Linux).</p>
+<p>Jalankan:</p>
+<pre><code class="language-bash">lsusb
+</code><button class="copy-btn">Copy</button></pre>
+<p>Contoh output jika <strong>v1</strong>:</p>
+<pre><code>Bus 002 Device 004: ID 0cf3:9271 Atheros Communications, Inc. AR9271 802.11n
+</code><button class="copy-btn">Copy</button></pre>
+<p>✅ Jika terlihat <code>0cf3:9271</code>, berarti benar <strong>TL-WN722N v1</strong>.
+❌ Jika berbeda (misal <code>2357:010c</code>), berarti versi <strong>v2/v3</strong> — itu butuh driver berbeda.</p>
+<hr>
+<h2>⚙️ 2. Aktifkan Modul Driver Bawaan</h2>
+<p>Ubuntu Server biasanya sudah punya driver <code>ath9k_htc</code>.
+Kita tinggal <strong>aktifkan</strong> dan <strong>pastikan firmware tersedia</strong>.</p>
+<pre><code class="language-bash">sudo apt update
+sudo apt install -y linux-firmware wireless-tools wpasupplicant net-tools usbutils iw network-manager macchanger
+</code><button class="copy-btn">Copy</button></pre>
+<p>Kemudian muat modul:</p>
+<pre><code class="language-bash">sudo modprobe ath9k_htc
+</code><button class="copy-btn">Copy</button></pre>
+<p>Cek apakah terdeteksi:</p>
+<pre><code class="language-bash">iwconfig
+</code><button class="copy-btn">Copy</button></pre>
+<p>Jika muncul seperti:</p>
+<pre><code>wlan0     IEEE 802.11  ESSID:off/any  Mode:Managed  Access Point: Not-Associated
+</code><button class="copy-btn">Copy</button></pre>
+<p>✅ berarti driver sudah berfungsi.</p>
+<hr>
+<h2>🧰 3. Tambahkan agar Modul Aktif Otomatis Saat Boot</h2>
+<p>Supaya tidak perlu memuat manual setiap kali restart:</p>
+<pre><code class="language-bash">echo ath9k_htc | sudo tee -a /etc/modules
+</code><button class="copy-btn">Copy</button></pre>
+<hr>
+<h2>🌐 4. Hubungkan ke Wi-Fi (CLI)</h2>
+<p>Gunakan <code>nmcli</code> (NetworkManager CLI) atau <code>wpa_supplicant</code>.</p>
+<h3>Opsi 1 — Menggunakan <code>nmcli</code> (lebih mudah)</h3>
+<p>Pastikan NetworkManager aktif:</p>
+<pre><code class="language-bash">sudo apt install network-manager
+sudo systemctl enable NetworkManager
+sudo systemctl start NetworkManager
+</code><button class="copy-btn">Copy</button></pre>
+<p>Kemudian hubungkan Wi-Fi:</p>
+<pre><code class="language-bash">nmcli device wifi list
+nmcli device wifi connect "Nama_WiFi" password "KataSandiWiFi"
+</code><button class="copy-btn">Copy</button></pre>
+<p>Cek status koneksi:</p>
+<pre><code class="language-bash">nmcli device status
+</code><button class="copy-btn">Copy</button></pre>
+<hr>
+<h3>Opsi 2 — Menggunakan <code>wpa_supplicant</code> (lebih ringan)</h3>
+<p>Buat file konfigurasi:</p>
+<pre><code class="language-bash">sudo nano /etc/wpa_supplicant.conf
+</code><button class="copy-btn">Copy</button></pre>
+<p>Isi dengan:</p>
+<pre><code class="language-bash">network={
+    ssid="Nama_WiFi"
+    psk="KataSandiWiFi"
+}
+</code><button class="copy-btn">Copy</button></pre>
+<p>Kemudian jalankan:</p>
+<pre><code class="language-bash">sudo wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant.conf
+sudo dhclient wlan0
+</code><button class="copy-btn">Copy</button></pre>
+<hr>
+<h2>🧪 5. Cek Koneksi Internet</h2>
+<pre><code class="language-bash">ping -c 4 google.com
+</code><button class="copy-btn">Copy</button></pre>
+<p>Jika berhasil reply → ✅ koneksi sudah aktif.</p>
+<hr>
+<h2>🩺 6. Jika Tidak Terdeteksi</h2>
+<p>Jika <code>iwconfig</code> tidak menampilkan <code>wlan0</code>, coba langkah berikut:</p>
+<pre><code class="language-bash">sudo dmesg | grep ath9k_htc
+</code><button class="copy-btn">Copy</button></pre>
+<p>Jika muncul pesan seperti:</p>
+<pre><code>firmware ath9k_htc/htc_9271.fw not found
+</code><button class="copy-btn">Copy</button></pre>
+<p>→ berarti firmware belum ada.</p>
+<p>Unduh manual:</p>
+<pre><code class="language-bash">sudo mkdir -p /lib/firmware/ath9k_htc/
+sudo wget https://github.com/qca/open-ath9k-htc-firmware/raw/master/htc_9271.fw -O /lib/firmware/ath9k_htc/htc_9271.fw
+sudo modprobe -r ath9k_htc
+sudo modprobe ath9k_htc
+</code><button class="copy-btn">Copy</button></pre>
+<hr>
+<h2>✅ Ringkasan</h2>
+<table>
+<thead>
+<tr>
+<th>Langkah</th>
+<th>Perintah</th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Cek USB</td>
+<td><code>lsusb</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Instal driver &amp; firmware</td>
+<td><code>sudo apt install linux-firmware</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Aktifkan modul</td>
+<td><code>sudo modprobe ath9k_htc</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Cek koneksi</td>
+<td><code>iwconfig</code> / <code>nmcli</code></td>
+<td></td>
+</tr>
+<tr>
+<td>Auto load saat boot</td>
+<td>`echo ath9k_htc</td>
+<td>sudo tee -a /etc/modules`</td>
+</tr>
+<tr>
+<td>Jika firmware hilang</td>
+<td>Unduh <code>htc_9271.fw</code> dari GitHub</td>
+<td></td>
+</tr>
+</tbody></table>
+<hr>
+<p>Kalau kamu mau, saya bisa bantu buatkan <strong>skrip otomatis</strong> (<code>.sh</code>) agar semua langkah di atas bisa dijalankan satu kali (praktis untuk server tanpa GUI).
+Apakah kamu mau saya buatkan skripnya juga?</p>
+<hr>
+<hr>
+<hr>
+<p>Pertanyaan yang sangat bagus 👍</p>
+<p>Nama <strong><code>wlxc4e98408f268</code></strong> yang kamu lihat <strong>bukan kesalahan</strong>, tetapi hasil dari <strong>aturan penamaan perangkat jaringan baru (predictable network interface names)</strong> yang diterapkan di Ubuntu sejak versi 16.04 ke atas.</p>
+<p>Mari saya jelaskan secara singkat dan jelas 👇</p>
+<hr>
+<h2>🧠 Mengapa Bukan <code>wlan0</code>?</h2>
+<p>Dulu (versi lama Linux), nama antarmuka Wi-Fi <strong>selalu</strong> berupa <code>wlan0</code>, <code>wlan1</code>, dst.
+Namun, sekarang Ubuntu menggunakan <strong>"Predictable Network Interface Names"</strong> dari sistem <strong><code>systemd/udev</code></strong>, yang menamai perangkat berdasarkan:</p>
+<ul>
+<li>Jenis antarmuka (wl = wireless LAN),</li>
+<li>MAC address perangkat (<code>c4:e9:84:08:f2:68</code> pada contohmu).</li>
+</ul>
+<p>Sehingga jadilah:</p>
+<pre><code>wlx + [alamat MAC tanpa titik dua]
+→ wlxc4e98408f268
+</code><button class="copy-btn">Copy</button></pre>
+<p>Jadi sebenarnya nama itu berarti:</p>
+<blockquote>
+<p><strong>wlan</strong> (Wi-Fi) dengan <strong>MAC address c4:e9:84:08:f2:68</strong></p>
+</blockquote>
+<hr>
+<h2>⚙️ Apakah Bisa Dikembalikan ke <code>wlan0</code>?</h2>
+<p>Bisa. Ada dua cara — tergantung kebutuhan kamu:</p>
+<hr>
+<h3><strong>Opsi 1 — Ubah ke Nama Lama (<code>wlan0</code>)</strong></h3>
+<p>Jika kamu lebih suka nama klasik (lebih mudah untuk skrip dan konfigurasi):</p>
+<ol>
+<li><p>Edit konfigurasi GRUB:</p>
+<pre><code class="language-bash">sudo nano /etc/default/grub
+</code><button class="copy-btn">Copy</button></pre>
+</li>
+<li><p>Temukan baris:</p>
+<pre><code>GRUB_CMDLINE_LINUX=""
+</code><button class="copy-btn">Copy</button></pre>
+<p>Ubah menjadi:</p>
+<pre><code>GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0"
+</code><button class="copy-btn">Copy</button></pre>
+</li>
+<li><p>Simpan, lalu update GRUB:</p>
+<pre><code class="language-bash">sudo update-grub
+</code><button class="copy-btn">Copy</button></pre>
+</li>
+<li><p>Reboot sistem:</p>
+<pre><code class="language-bash">sudo reboot
+</code><button class="copy-btn">Copy</button></pre>
+</li>
+</ol>
+<p>Setelah itu, jalankan:</p>
+<pre><code class="language-bash">iwconfig
+</code><button class="copy-btn">Copy</button></pre>
+<p>Maka perangkat akan bernama <strong><code>wlan0</code></strong> seperti dulu.</p>
+<hr>
+<h3><strong>Opsi 2 — Biarkan Seperti Sekarang (Disarankan di Server)</strong></h3>
+<p>Tidak perlu diubah; kamu cukup gunakan nama <code>wlxc4e98408f268</code> di setiap perintah, misalnya:</p>
+<pre><code class="language-bash">sudo ip link set wlxc4e98408f268 up
+sudo dhclient wlxc4e98408f268
+</code><button class="copy-btn">Copy</button></pre>
+<p>Atau, jika ingin lebih ringkas tanpa mengubah GRUB, kamu bisa <strong>buat alias manual</strong> agar sistem mengenal <code>wlan0</code>:</p>
+<pre><code class="language-bash">sudo ln -s /sys/class/net/wlxc4e98408f268 /sys/class/net/wlan0
+</code><button class="copy-btn">Copy</button></pre>
+<p>Namun ini hanya sementara (tidak permanen setelah reboot).</p>
+<hr>
+<h2>✅ Rekomendasi untuk Ubuntu Server</h2>
+<p>Jika kamu ingin konsistensi untuk skrip atau konfigurasi jaringan otomatis, <strong>ubah ke <code>wlan0</code> via GRUB</strong> (Opsi 1).
+Tapi jika kamu hanya menggunakan koneksi Wi-Fi biasa dan tidak terganggu oleh nama panjang itu, <strong>biarkan saja</strong> — tidak ada masalah teknis sama sekali.</p>
+<hr>
+<p>Apakah kamu ingin saya bantu buatkan <strong>perintah otomatis (skrip <code>.sh</code>)</strong> untuk mengubah nama antarmuka jadi <code>wlan0</code> permanen di Ubuntu Server?</p>
+<hr>
+<hr>
+<hr>
+<p>Baik, Natia. Berdasarkan langkah-langkah yang kamu tulis, masalah yang kamu alami adalah <strong>Wi-Fi tidak otomatis terhubung setelah reboot</strong> di Ubuntu Server. Ini umum terjadi karena koneksi dibuat secara manual menggunakan <code>nmcli</code> atau <code>wpa_supplicant</code>, tetapi belum dikonfigurasi agar aktif otomatis saat sistem dinyalakan.</p>
+<p>Mari kita perbaiki langkah demi langkah supaya koneksi Wi-Fi tersambung otomatis saat reboot.</p>
+<hr>
+<h2>🧩 1. Cek Nama Interface</h2>
+<p>Pastikan dulu nama interface Wi-Fi kamu benar, karena di Ubuntu Server kadang bukan <code>wlan0</code>, tapi <code>wlx...</code>.</p>
+<pre><code class="language-bash">nmcli device status
+</code><button class="copy-btn">Copy</button></pre>
+<p>Contoh output:</p>
+<pre><code>DEVICE           TYPE      STATE         CONNECTION
+wlxc4e98408f268  wifi      connected     Free-WIFI
+eth0             ethernet  connected     Wired connection 1
+lo               loopback  unmanaged     --
+</code><button class="copy-btn">Copy</button></pre>
+<p>Berarti nama interface Wi-Fi kamu adalah <code>wlxc4e98408f268</code>.</p>
+<hr>
+<h2>⚙️ 2. Hapus Koneksi Lama (opsional)</h2>
+<p>Untuk memastikan tidak ada konfigurasi ganda, jalankan:</p>
+<pre><code class="language-bash">sudo nmcli connection delete id "Free-WIFI"
+</code><button class="copy-btn">Copy</button></pre>
+<hr>
+<h2>🌐 3. Buat Koneksi Wi-Fi yang Permanen</h2>
+<p>Gunakan perintah berikut (ganti <code>wlxc4e98408f268</code> dengan nama interface kamu):</p>
+<pre><code class="language-bash">sudo nmcli dev wifi connect "Free-WIFI" password "MasterPotato" ifname wlxc4e98408f268 name Free-WIFI
+</code><button class="copy-btn">Copy</button></pre>
+<p>Perintah ini akan membuat profil koneksi baru bernama <strong>Free-WIFI</strong> yang disimpan secara permanen oleh NetworkManager.</p>
+<hr>
+<h2>🔁 4. Atur Koneksi agar Otomatis Aktif Saat Boot</h2>
+<p>Pastikan koneksi diset agar otomatis aktif:</p>
+<pre><code class="language-bash">sudo nmcli connection modify "Free-WIFI" connection.autoconnect yes
+</code><button class="copy-btn">Copy</button></pre>
+<p>Cek hasilnya:</p>
+<pre><code class="language-bash">nmcli connection show "Free-WIFI" | grep autoconnect
+</code><button class="copy-btn">Copy</button></pre>
+<p>Harus muncul:</p>
+<pre><code>connection.autoconnect: yes
+</code><button class="copy-btn">Copy</button></pre>
+<hr>
+<h2>🧠 5. Nonaktifkan Konfigurasi Manual <code>wpa_supplicant</code> (jika ada)</h2>
+<p>Jika kamu sebelumnya menambahkan konfigurasi manual di <code>/etc/wpa_supplicant.conf</code> dan memanggilnya di <code>/etc/rc.local</code> atau systemd, <strong>hapus atau nonaktifkan</strong> agar tidak konflik dengan NetworkManager.</p>
+<hr>
+<h2>🔧 6. Restart NetworkManager</h2>
+<pre><code class="language-bash">sudo systemctl restart NetworkManager
+</code><button class="copy-btn">Copy</button></pre>
+<hr>
+<h2>🧪 7. Uji Coba Reboot</h2>
+<p>Sekarang reboot server:</p>
+<pre><code class="language-bash">sudo reboot
+</code><button class="copy-btn">Copy</button></pre>
+<p>Setelah sistem menyala, cek koneksi:</p>
+<pre><code class="language-bash">nmcli device status
+</code><button class="copy-btn">Copy</button></pre>
+<p>Pastikan status Wi-Fi menjadi:</p>
+<pre><code>wifi      connected  Free-WIFI
+</code><button class="copy-btn">Copy</button></pre>
+<hr>
+<h2>💡 Alternatif (Jika NetworkManager Tidak Aktif)</h2>
+<p>Kalau kamu <strong>tidak menggunakan NetworkManager</strong> (misalnya karena sistem minimal), maka gunakan konfigurasi <code>netplan</code>.</p>
+<p>Edit file di:</p>
+<pre><code class="language-bash">sudo nano /etc/netplan/01-netcfg.yaml
+</code><button class="copy-btn">Copy</button></pre>
+<p>Isi (contoh):</p>
+<pre><code class="language-yaml">network:
+  version: 2
+  renderer: networkd
+  wifis:
+    wlxc4e98408f268:
+      dhcp4: true
+      access-points:
+        "Free-WIFI":
+          password: "MasterPotato"
+</code><button class="copy-btn">Copy</button></pre>
+<p>Lalu simpan dan terapkan:</p>
+<pre><code class="language-bash">sudo netplan apply
+</code><button class="copy-btn">Copy</button></pre>
+<p>Sekarang Wi-Fi akan otomatis tersambung setiap kali reboot.</p>
+<hr>
+<p>Kalau kamu kirimkan hasil dari:</p>
+<pre><code class="language-bash">nmcli device status
+</code><button class="copy-btn">Copy</button></pre>
+<p>dan</p>
+<pre><code class="language-bash">systemctl status NetworkManager
+</code><button class="copy-btn">Copy</button></pre>
+<p>saya bisa bantu pastikan apakah sistem kamu pakai <strong>NetworkManager</strong> atau <strong>netplan/networkd</strong>, supaya langkah selanjutnya bisa lebih akurat. Mau saya bantu cek itu juga?</p>
+<hr>
+<hr>
+<hr>
+<p>Bagus, Natia 👍
+Kalau kamu ingin <strong>mengubah Wi-Fi di Ubuntu Server menjadi IP statis</strong> (bukan DHCP otomatis), kamu bisa ubah sedikit konfigurasi <code>netplan</code> milikmu.</p>
+<p>Berikut panduannya yang rapi dan sesuai kaidah sistem Ubuntu Server 22.04 ke atas 👇</p>
+<hr>
+<h2>🧭 1. Buka file konfigurasi netplan</h2>
+<p>Biasanya di <code>/etc/netplan/</code>:</p>
+<pre><code class="language-bash">sudo nano /etc/netplan/01-netcfg.yaml
+</code><button class="copy-btn">Copy</button></pre>
+<hr>
+<h2>⚙️ 2. Ubah isinya seperti contoh berikut</h2>
+<p>Misalnya kamu ingin IP statis <strong>192.168.1.50</strong>, gateway <strong>192.168.1.1</strong>, dan DNS <strong>8.8.8.8</strong>:</p>
+<pre><code class="language-yaml">network:
+  version: 2
+  renderer: networkd
+  wifis:
+    wlxc4e98408f268:
+      access-points:
+        "Free-WIFI":
+          password: "MasterPotato"
+      addresses:
+        - 192.168.1.50/24
+      routes:
+        - to: default
+          via: 192.168.1.1
+      nameservers:
+        addresses: [8.8.8.8, 1.1.1.1]
+</code><button class="copy-btn">Copy</button></pre>
+<hr>
+<h2>🧩 3. Terapkan konfigurasi</h2>
+<pre><code class="language-bash">sudo netplan apply
+</code><button class="copy-btn">Copy</button></pre>
+<p>Jika ingin memastikan tidak ada error:</p>
+<pre><code class="language-bash">sudo netplan try
+</code><button class="copy-btn">Copy</button></pre>
+<p><em>(Akan menunggu konfirmasi selama 120 detik sebelum menyimpan perubahan secara permanen — cocok untuk menghindari salah konfigurasi.)</em></p>
+<hr>
+<h2>🧪 4. Cek hasilnya</h2>
+<pre><code class="language-bash">ip a
+</code><button class="copy-btn">Copy</button></pre>
+<p>atau</p>
+<pre><code class="language-bash">ip addr show wlxc4e98408f268
+</code><button class="copy-btn">Copy</button></pre>
+<p>Kamu harus melihat IP <code>192.168.1.50</code> sudah terpasang.</p>
+<hr>
+<h2>💡 Catatan tambahan</h2>
+<ul>
+<li><p>Jika koneksi Wi-Fi masih tidak otomatis aktif saat reboot, pastikan kamu sudah <strong>menonaktifkan konfigurasi manual <code>wpa_supplicant</code></strong> dan hanya pakai <code>netplan</code>.</p>
+</li>
+<li><p>Pastikan juga <code>renderer</code> sesuai sistem kamu:</p>
+<ul>
+<li><p>Jika pakai <strong>NetworkManager</strong>, ubah menjadi:</p>
+<pre><code class="language-yaml">renderer: NetworkManager
+</code><button class="copy-btn">Copy</button></pre>
+</li>
+<li><p>Jika server headless (tanpa GUI), biarkan <code>networkd</code>.</p>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<p>Apakah kamu ingin saya bantu buatkan contoh versi <strong>dua koneksi (LAN + Wi-Fi)</strong> dengan LAN statis dan Wi-Fi DHCP juga? Itu sering dipakai untuk server seperti milikmu.</p>
+
+
+<script>
+(function activateCopyButtons(container=document) {
+            container.querySelectorAll(".copy-btn").forEach((btn) => {
+                btn.onclick = () => {
+                    const code = btn.parentElement.innerText.replace("Copy", "").trim();
+                    navigator.clipboard.writeText(code);
+                    btn.textContent = "Copied!";
+                    setTimeout(() => btn.textContent = "Copy", 2000);
+                };
+            });
+        })();
+</script>
+</body>
+</html>
